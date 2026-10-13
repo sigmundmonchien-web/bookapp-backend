@@ -1,18 +1,20 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    google_books_api_key: '%env(GOOGLE_BOOKS_API_KEY)%'
+    profile_photos_directory: '%kernel.project_dir%/public/uploads/profile-photos'
+    profile_photos_public_path: '/uploads/profile-photos'
+    profile_photo_max_size: 5242880  # 5 Mo en octets
+    profile_photo_allowed_mime_types:
+        - 'image/jpeg'
+        - 'image/png'
+        - 'image/webp'
+    app.contact_email: '%env(CONTACT_EMAIL)%'
 
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+        autowire: true
+        autoconfigure: true
+        bind:
+            string $contactEmail: '%env(CONTACT_EMAIL)%'
     App\:
         resource: '../src/'
         exclude:
@@ -20,5 +22,21 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    App\Controller\BookController:
+        arguments:
+            $googleBooksApiKey: '%google_books_api_key%'
+
+    App\Service\BookService:
+        arguments:
+            $googleBooksApiKey: '%google_books_api_key%'        
+
+
+    App\Service\ProfilePhotoUploader:
+        arguments:
+            $profilePhotosDirectory: '%profile_photos_directory%'
+            $profilePhotoMaxSize: '%profile_photo_max_size%'
+            $profilePhotoAllowedMimeTypes: '%profile_photo_allowed_mime_types%'      
+
+    App\Controller\MeController:
+        arguments:
+            $profilePhotosPublicPath: '%profile_photos_public_path%'      

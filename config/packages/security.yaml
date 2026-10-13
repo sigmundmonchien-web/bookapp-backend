@@ -4,14 +4,30 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider: 
+            entity:
+                class: App\Entity\User
+                property: email # or username, depending on your User entity
+    # Symfony sait maintenant chercher les utilisateurs dans ta table ei_user via l'email.
+    
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            stateless: true # pas de session, chaque requête devra avoir un token JWT. C'est le mode API REST.
+            json_login: # Symfony gère automatiquement la route /api/login quand on envoie email + password en JSON.
+                check_path: /api/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure    
+            jwt: ~  
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -22,8 +38,14 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+         - { path: ^/api/login, roles: PUBLIC_ACCESS  }
+         - { path: ^/api/register, roles: PUBLIC_ACCESS  }
+         - { path: ^/api/doc, roles: PUBLIC_ACCESS  }
+         - { path: ^/api/admin, roles: ROLE_ADMIN }
+         - { path: ^/api, roles: ROLE_USER }
+
+         # login et register sont publics, l'admin nécessite ROLE_ADMIN,
+         # tout le reste de l'API nécessite d'être connecté.
 
 when@test:
     security:

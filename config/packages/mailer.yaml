@@ -1,3 +1,7 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        envelope:
+            sender: 'alberty@alwaysdata.net'
+        headers:
+            from: 'EI BookApp <alberty@alwaysdata.net>'
